@@ -1,8 +1,6 @@
-# Image-Captioning-Sagemaker
-Deploy Huggingface Image-to-text pretrained model on AWS Sagemaker
-
+(under construction)
 # Image Captioning Sagemaker App
-
+Deploy Huggingface Image-to-text pretrained model on AWS Sagemaker
 1. On mac: `brew install git-lfs`
     
     Do this:
