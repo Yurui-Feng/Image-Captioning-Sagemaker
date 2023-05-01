@@ -1,4 +1,6 @@
 (under construction)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # Image Captioning Sagemaker App
 Deploy Huggingface Image-to-text pretrained model on AWS Sagemaker
 1. On mac: `brew install git-lfs`
