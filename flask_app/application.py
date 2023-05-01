@@ -1,19 +1,32 @@
 import json
 import requests
 import datetime
+import boto3
+import os
 from io import BytesIO
 from PIL import Image
 from flask import Flask, render_template, request, redirect, url_for
 from sagemaker import Session
-from sagemaker.predictor import Predictor
 from sagemaker.huggingface.model import HuggingFacePredictor
 
 app = Flask(__name__)
 
+aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
+aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+aws_region = os.environ.get("AWS_REGION")
+endpoint_name = os.environ.get("SAGEMAKER_ENDPOINT_NAME")
+
+# Create a boto3 session with the provided credentials and region
+boto3_session = boto3.Session(
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key,
+    region_name=aws_region
+)
+
 # Set up the SageMaker predictor
-sagemaker_session = Session()
+sagemaker_session = Session(boto3_session)
 predictor = HuggingFacePredictor(
-    endpoint_name="huggingface-pytorch-inference-2023-05-01-00-45-11-156",
+    endpoint_name=endpoint_name,
     sagemaker_session=sagemaker_session
 )
 
@@ -39,4 +52,4 @@ def get_image_caption(image_url):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=80)
