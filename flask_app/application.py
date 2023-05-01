@@ -9,7 +9,7 @@ from flask import Flask, render_template, request, redirect, url_for
 from sagemaker import Session
 from sagemaker.huggingface.model import HuggingFacePredictor
 
-app = Flask(__name__)
+application = Flask(__name__)
 
 aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
@@ -30,7 +30,7 @@ predictor = HuggingFacePredictor(
     sagemaker_session=sagemaker_session
 )
 
-@app.route("/", methods=["GET", "POST"])
+@application.route("/", methods=["GET", "POST"])
 def index():
     default_image_url = "https://huggingface.co/datasets/Narsil/image_dummy/raw/main/parrots.png"
     if request.method == "POST":
@@ -52,4 +52,4 @@ def get_image_caption(image_url):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80)
+    application.run(host='0.0.0.0', port=80)

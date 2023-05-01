@@ -1,5 +1,5 @@
 Flask
-Pillow
-requests
 boto3
+requests
+Pillow
 sagemaker
