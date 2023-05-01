@@ -93,9 +93,11 @@ Add sagemaker full access to **aws-elasticbeanstalk-ec2-role**
 
 use default VPC
 
-![Untitled](img/elb0.png)
-![Untitled](img/elb1.png)
+![Untitled](imgs/elb0.png)
+
+
+![Untitled](imgs/elb1.png)
 
 8.
 
-![Untitled](img/envs.png)
+![Untitled](imgs/envs.png)
