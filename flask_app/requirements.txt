@@ -1,0 +1,5 @@
+Flask
+Pillow
+requests
+boto3
+sagemaker
