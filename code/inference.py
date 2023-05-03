@@ -27,6 +27,8 @@ def input_fn(input_data, content_type):
     if content_type == "application/json":
         input_data = json.loads(input_data)
         return input_data
+    elif content_type == "image/jpeg" or content_type == "image/png":
+        return {"inputs": [BytesIO(input_data)]}
     else:
         raise ValueError(f"Unsupported content_type: {content_type}")
 
@@ -37,12 +39,16 @@ def predict_fn(input_data, model_artifacts):
     tokenizer = model_artifacts["tokenizer"]
     device = model_artifacts["device"]
 
-    image_urls = input_data["inputs"]
+    image_inputs = input_data["inputs"]
     images = []
 
-    for image_url in image_urls:
-        response = requests.get(image_url)
-        i_image = Image.open(BytesIO(response.content))
+    for image_input in image_inputs:
+        if isinstance(image_input, str):  # URL case
+            response = requests.get(image_input)
+            i_image = Image.open(BytesIO(response.content))
+        elif isinstance(image_input, BytesIO):  # File upload case
+            i_image = Image.open(image_input)
+
         if i_image.mode != "RGB":
             i_image = i_image.convert(mode="RGB")
         images.append(i_image)

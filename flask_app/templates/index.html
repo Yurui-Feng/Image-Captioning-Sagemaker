@@ -82,8 +82,14 @@
 
     <form action="/" method="post">
       <label for="image_url">Enter image URL:</label>
-      <input type="url" id="image_url" name="image_url" required value="{{ image_url }}">
+      <input type="url" id="image_url" name="image_url" value="{{ image_url }}">
       <input type="submit" value="Get Caption">
+    </form>
+
+    <form action="/" method="post" enctype="multipart/form-data">
+      <label for="image_file">Or upload an image:</label>
+      <input type="file" id="image_file" name="image_file" accept="image/*">
+      <input type="submit" value="Upload Image">
     </form>
 
     {% if image_url %}
@@ -100,3 +106,11 @@
     </footer>
   </body>
 </html>
+In this updated version, I've added a new form below the existing one with the same styles applied. The new form has a file input field and a submit button with the text "Upload Image".
+
+
+
+
+
+
+

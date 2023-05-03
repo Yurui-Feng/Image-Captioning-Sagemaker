@@ -8,6 +8,8 @@ from PIL import Image
 from flask import Flask, render_template, request, redirect, url_for
 from sagemaker import Session
 from sagemaker.huggingface.model import HuggingFacePredictor
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
 
 application = Flask(__name__)
 
@@ -15,7 +17,7 @@ aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
 aws_region = os.environ.get("AWS_REGION")
 endpoint_name = os.environ.get("SAGEMAKER_ENDPOINT_NAME")
-
+#endpoint_name = ""
 # Create a boto3 session with the provided credentials and region
 boto3_session = boto3.Session(
     aws_access_key_id=aws_access_key_id,
@@ -30,26 +32,61 @@ predictor = HuggingFacePredictor(
     sagemaker_session=sagemaker_session
 )
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@application.route('/uploads/<filename>')
+def uploaded_file(filename):
+    image_url = request.url_root + "uploads/" + filename
+    caption = get_image_caption(image_url)
+    return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
+
+
 @application.route("/", methods=["GET", "POST"])
 def index():
     default_image_url = "https://huggingface.co/datasets/Narsil/image_dummy/raw/main/parrots.png"
     if request.method == "POST":
-        image_url = request.form["image_url"]
-        caption = get_image_caption(image_url)
-        return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
+        image_url = None
+        if "image_url" in request.form:
+            image_url = request.form["image_url"]
+        elif "image_file" in request.files:
+            image_file = request.files["image_file"]
+            if image_file and allowed_file(image_file.filename):
+                filename = secure_filename(image_file.filename)
+                image_file_path = os.path.join(application.config["UPLOAD_FOLDER"], filename)
+                image_file.save(image_file_path)
+                image_url = url_for("uploaded_file", filename=filename)
+
+        if image_url:
+            caption = get_image_caption(image_url)
+            return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
 
     caption = get_image_caption(default_image_url)
     return render_template("index.html", caption=caption, image_url=default_image_url, current_year=datetime.datetime.now().year)
 
-
-def get_image_caption(image_url):
-    data = {
-        "inputs": [image_url]
-    }
+# Update the get_image_caption function
+def get_image_caption(image_url=None, image_file=None):
+    if image_url is not None:
+        data = {
+            "inputs": [image_url]
+        }
+    elif image_file is not None:
+        data = {
+            "inputs": [image_file.read()]
+        }
+    else:
+        raise ValueError("Both image_url and image_file cannot be None.")
+    
     response = predictor.predict(data)
     caption = response[0].strip('[]"')
     return caption
 
 
 if __name__ == "__main__":
-    application.run(host='0.0.0.0', port=80)
+    application.config["UPLOAD_FOLDER"] = "uploads"
+    if not os.path.exists(application.config["UPLOAD_FOLDER"]):
+        os.makedirs(application.config["UPLOAD_FOLDER"])
+    application.run()
+#host='0.0.0.0', port=80
