@@ -14,6 +14,7 @@ from flask import send_from_directory
 
 application = Flask(__name__)
 
+application.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 application.config["UPLOAD_FOLDER"] = "uploads"
 if not os.path.exists(application.config["UPLOAD_FOLDER"]):
     os.makedirs(application.config["UPLOAD_FOLDER"])
