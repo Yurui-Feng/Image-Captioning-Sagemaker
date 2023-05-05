@@ -3,6 +3,7 @@ import requests
 import datetime
 import boto3
 import os
+import base64
 from io import BytesIO
 from PIL import Image
 from flask import Flask, render_template, request, redirect, url_for
@@ -12,6 +13,7 @@ from werkzeug.utils import secure_filename
 from flask import send_from_directory
 
 application = Flask(__name__)
+
 
 aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
@@ -32,16 +34,15 @@ predictor = HuggingFacePredictor(
     sagemaker_session=sagemaker_session
 )
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @application.route('/uploads/<filename>')
 def uploaded_file(filename):
-    image_url = request.url_root + "uploads/" + filename
-    caption = get_image_caption(image_url)
-    return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
+    return send_from_directory(application.config["UPLOAD_FOLDER"], filename)
+
 
 
 @application.route("/", methods=["GET", "POST"])
@@ -57,27 +58,39 @@ def index():
                 filename = secure_filename(image_file.filename)
                 image_file_path = os.path.join(application.config["UPLOAD_FOLDER"], filename)
                 image_file.save(image_file_path)
-                image_url = url_for("uploaded_file", filename=filename)
+                image_url = url_for("uploaded_file", filename=filename)  # Updated line
+
+                caption = get_image_caption(image_file_path=image_file_path)
+                return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
 
         if image_url:
-            caption = get_image_caption(image_url)
+            caption = get_image_caption(image_url=image_url)
             return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
 
     caption = get_image_caption(default_image_url)
     return render_template("index.html", caption=caption, image_url=default_image_url, current_year=datetime.datetime.now().year)
 
+
+
+
 # Update the get_image_caption function
-def get_image_caption(image_url=None, image_file=None):
+def get_image_caption(image_url=None, image_file_path=None):
     if image_url is not None:
         data = {
             "inputs": [image_url]
         }
-    elif image_file is not None:
+    elif image_file_path is not None:
+        with open(image_file_path, "rb") as image_file:
+            image_bytes = image_file.read()
+        
+        # Encode image bytes to base64
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        
         data = {
-            "inputs": [image_file.read()]
+            "inputs": [image_base64]
         }
     else:
-        raise ValueError("Both image_url and image_file cannot be None.")
+        raise ValueError("Both image_url and image_file_path cannot be None.")
     
     response = predictor.predict(data)
     caption = response[0].strip('[]"')
