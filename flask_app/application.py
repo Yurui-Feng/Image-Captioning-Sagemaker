@@ -14,6 +14,10 @@ from flask import send_from_directory
 
 application = Flask(__name__)
 
+application.config["UPLOAD_FOLDER"] = "uploads"
+if not os.path.exists(application.config["UPLOAD_FOLDER"]):
+    os.makedirs(application.config["UPLOAD_FOLDER"])
+
 
 aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
@@ -98,8 +102,5 @@ def get_image_caption(image_url=None, image_file_path=None):
 
 
 if __name__ == "__main__":
-    application.config["UPLOAD_FOLDER"] = "uploads"
-    if not os.path.exists(application.config["UPLOAD_FOLDER"]):
-        os.makedirs(application.config["UPLOAD_FOLDER"])
     application.run()
 #host='0.0.0.0', port=80
