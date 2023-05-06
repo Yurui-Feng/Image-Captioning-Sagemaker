@@ -9,22 +9,28 @@ from PIL import Image
 from flask import Flask, render_template, request, redirect, url_for
 from sagemaker import Session
 from sagemaker.huggingface.model import HuggingFacePredictor
+#? add to requirements?
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
 
 application = Flask(__name__)
 
 application.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
+
+#set default uploader path
+### not recommended, ideally file should be uploaded to a S3 bucket
 application.config["UPLOAD_FOLDER"] = "uploads"
 if not os.path.exists(application.config["UPLOAD_FOLDER"]):
     os.makedirs(application.config["UPLOAD_FOLDER"])
 
-
+#read aws credentials from elastic beanstalk envrionments
 aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
 aws_region = os.environ.get("AWS_REGION")
+#read endpoint name from envrionment 
 endpoint_name = os.environ.get("SAGEMAKER_ENDPOINT_NAME")
 #endpoint_name = ""
+
 # Create a boto3 session with the provided credentials and region
 boto3_session = boto3.Session(
     aws_access_key_id=aws_access_key_id,
@@ -48,8 +54,6 @@ def allowed_file(filename):
 def uploaded_file(filename):
     return send_from_directory(application.config["UPLOAD_FOLDER"], filename)
 
-
-
 @application.route("/", methods=["GET", "POST"])
 def index():
     default_image_url = "https://huggingface.co/datasets/Narsil/image_dummy/raw/main/parrots.png"
@@ -57,17 +61,19 @@ def index():
         image_url = None
         if "image_url" in request.form:
             image_url = request.form["image_url"]
+
+        #convert the uploaded file for image captioning
         elif "image_file" in request.files:
             image_file = request.files["image_file"]
             if image_file and allowed_file(image_file.filename):
                 filename = secure_filename(image_file.filename)
                 image_file_path = os.path.join(application.config["UPLOAD_FOLDER"], filename)
                 image_file.save(image_file_path)
-                image_url = url_for("uploaded_file", filename=filename)  # Updated line
-
+                image_url = url_for("uploaded_file", filename=filename) 
                 caption = get_image_caption(image_file_path=image_file_path)
                 return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
 
+        #url case
         if image_url:
             caption = get_image_caption(image_url=image_url)
             return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
@@ -77,8 +83,6 @@ def index():
 
 
 
-
-# Update the get_image_caption function
 def get_image_caption(image_url=None, image_file_path=None):
     if image_url is not None:
         data = {
@@ -100,7 +104,6 @@ def get_image_caption(image_url=None, image_file_path=None):
     response = predictor.predict(data)
     caption = response[0].strip('[]"')
     return caption
-
 
 if __name__ == "__main__":
     application.run()
