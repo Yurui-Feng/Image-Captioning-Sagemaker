@@ -1,39 +1,28 @@
-(under construction)
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # Image Captioning Sagemaker App
-Deploy Huggingface Image-to-text pretrained model on AWS Sagemaker
-1. On mac: `brew install git-lfs`
-    
-    Do this:
-    
-    
-    [https://huggingface.co/docs/sagemaker/inference](https://huggingface.co/docs/sagemaker/inference)
-    
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+This application deploys a Huggingface Image-to-text pretrained model on AWS SageMaker and provides a Flask-based web interface to caption images. The web application is capable of handling both URL and uploaded images.
 
-1. After cloning the repo, before creating the tar.gz model file,
-    
-    Add a folder called `code`
-    
-    Add inference.py and requirements.txt
-    
-2. install AWSCLI
-    
-    `aws configure` with user credentials
-    
-    Upload to s3:
-    
-    `aws s3 cp model.tar.gz s3://image-captioning-yurui`
-    
+## Prerequisites
+- AWS Account with SageMaker and Elastic Beanstalk permissions
+- AWS CLI installed and configured with user credentials
+- Git LFS: On Mac, you can install it using `brew install git-lfs`
+- Python3 with Flask, Boto3, SageMaker, Pillow and Requests installed
 
-1. follow the notebook on sagemaker to deploy the model
-    
-    Alternatively, load the deployed model using: 
-    
+## Deployment Steps
+1. Clone the repository and navigate to the project directory.
+
+2. Prepare the model for deployment:
+    - Create a folder called `code` in the project directory.
+    - Add `inference.py` and `requirements.txt` to the `code` folder.
+    - Create a `model.tar.gz` file with the layout specified in the Huggingface SageMaker inference documentation.
+
+3. Upload the model to S3 using AWS CLI: `aws s3 cp model.tar.gz s3://<your-bucket-name>`
+
+4. Deploy the model on SageMaker. You can follow the instructions in the SageMaker notebook provided in this repository. Alternatively, you can load the deployed model using the following Python code:
+
     ```python
     from sagemaker import Session
-    from sagemaker.predictor import Predictor
     from sagemaker.huggingface.model import HuggingFacePredictor
     
     sagemaker_session = Session()
@@ -42,62 +31,63 @@ Deploy Huggingface Image-to-text pretrained model on AWS Sagemaker
         sagemaker_session=sagemaker_session
     )
     ```
-    
-2. create flask app scripts `app.py` and `html.index`
-    
-    run flask the app locally: [`http://127.0.0.1:5000`](http://127.0.0.1:5000/)
-    
 
+5. Set up the Flask application:
+    - Create `application.py` and `index.html` in the `templates` folder.
+    - Test the application locally by running `flask run` and visiting `http://127.0.0.1:5000/`.
 
-3. Deploy the app on elastic beanstalk
+6. Prepare the application for Elastic Beanstalk:
+    - Rename `app.py` to `application.py`.
+    - Create a `requirements.txt` file listing all the necessary Python packages.
+    - Create a `.ebextensions` directory and a `01_flask.config` file inside it with the following content:
 
+        ```python
+        option_settings:
+          aws:elasticbeanstalk:application:environment:
+            PYTHONPATH: "/var/app/current:$PYTHONPATH"
+          aws:elasticbeanstalk:container:python:
+            WSGIPath: "application:application"
+        ```
 
-```python
+    - Zip all the application files at the root level of the archive.
+
+Please note that the file structure of your application should look like this:
+
+```
 my_flask_app/
 ├── application.py
 ├── requirements.txt
 ├── templates/
 │   └── index.html
 └── .ebextensions/
-    └── 01_python.config
+    └── 01_flask.config
 ```
 
-1. Create a **`requirements.txt`** file in your project directory, listing all the necessary Python packages. Your **`requirements.txt`** file should look like this: 
+7. Deploy the application on Elastic Beanstalk:
+    - Go to the AWS Management Console and select Elastic Beanstalk.
+    - Add SageMaker Full Access to `aws-elasticbeanstalk-ec2-role`.
+    - Create a new application and select the default VPC.
+    - Upload the zip archive created in the previous step and launch the application.
+  
+8. Setting Environment Variables in Elastic Beanstalk
 
-```python
-Flask
-Pillow
-requests
-boto3
-sagemaker
-```
+Once your application is deployed on Elastic Beanstalk, you need to set some environment variables for your application to function properly. 
 
-1. . Rename your **`app.py`** to **`application.py`** because Elastic Beanstalk looks for a file named **`application.py`** by default.
-2.  Create a **`.ebextensions`** directory in your project directory to store Elastic Beanstalk configuration files. Inside this directory, create a file named **`01_flask.config`** with the following contents:
+1. In the Elastic Beanstalk dashboard, navigate to your application.
+2. Under the "Software" configuration, click on "Modify".
+3. Scroll down to the "Environment properties" section. 
 
-```python
-option_settings:
-  aws:elasticbeanstalk:application:environment:
-    PYTHONPATH: "/var/app/current:$PYTHONPATH"
-  aws:elasticbeanstalk:container:python:
-    WSGIPath: "application:application"
-```
+Here, you will need to add the following variables:
 
-This file tells Elastic Beanstalk to look for **`application.py`** as the entry point for your Flask app.
+1. `AWS_REGION`: The AWS region where your resources are located.
+2. `PYTHONPATH`: Should be set automatically
+3. `AWS_ACCESS_KEY_ID`: Your AWS Access Key ID for programmatic access.
+4. `AWS_SECRET_ACCESS_KEY`: Your AWS Secret Access Key corresponding to the Access Key ID.
+5. `SAGEMAKER_ENDPOINT_NAME`: The endpoint name of your deployed SageMaker model.
 
-4. Create a ZIP archive of your application files: Select all the files and folders in your project directory (**`application.py`**, **`requirements.txt`**, **`.ebextensions`**, and your **`templates`** folder), and create a ZIP archive. Make sure the files are at the root level of the archive, not within a subfolder.
+Your environment variables section should look like this:
 
-1. head to AWS management console and select Elastic BeanStalk
+![Environment Variables](imgs/envs.png)
 
-Add sagemaker full access to **aws-elasticbeanstalk-ec2-role**
+Make sure to replace the placeholders with your actual values and click "Apply" to save the changes. 
 
-use default VPC
-
-![Untitled](imgs/elb0.png)
-
-
-![Untitled](imgs/elb1.png)
-
-8.
-
-![Untitled](imgs/envs.png)
