@@ -50,10 +50,36 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def resize_image(input_image_path, output_image_path, size):
-    original_image = Image.open(input_image_path)
-    resized_image = original_image.thumbnail(size)
-    resized_image.save(output_image_path)
+def resize_image(input_image_path, output_image_path):
+    try:
+        original_image = Image.open(input_image_path)
+    except IOError:
+        print("Error: Unable to open image file.")
+        return None
+
+    width, height = original_image.size
+
+    # Calculate the new dimensions while keeping aspect ratio
+    if width > height:
+        new_width = 800
+        new_height = int((new_width * height) / width)
+    else:
+        new_height = 800
+        new_width = int((new_height * width) / height)
+
+    try:
+        resized_image = original_image.resize((new_width, new_height))
+    except Exception as e:
+        print(f"Error: Unable to resize image. {e}")
+        return None
+
+    try:
+        resized_image.save(output_image_path)
+        return output_image_path
+    except IOError:
+        print("Error: Unable to save resized image.")
+        return None
+
 
 @application.route('/uploads/<filename>')
 def uploaded_file(filename):
@@ -77,7 +103,7 @@ def index():
 
                 # Resize the image
                 resized_image_file_path = os.path.join(application.config["UPLOAD_FOLDER"], "resized_" + filename)
-                resize_image(image_file_path, resized_image_file_path, (800, 800))  # Resize to 800x800 or whatever size you prefer
+                resize_image(image_file_path, resized_image_file_path)  # Resize to 800x800 or whatever size you prefer
                 
                 image_url = url_for("uploaded_file", filename="resized_" + filename)
                 caption = get_image_caption(image_file_path=resized_image_file_path)  # Send the resized image to SageMaker
