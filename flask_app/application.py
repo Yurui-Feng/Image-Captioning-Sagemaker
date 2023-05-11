@@ -17,19 +17,19 @@ application = Flask(__name__)
 
 application.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 
-#set default uploader path
-### not recommended, ideally file should be uploaded to a S3 bucket
+# Set default uploader path
+### Not recommended, ideally file should be uploaded to a S3 bucket
 application.config["UPLOAD_FOLDER"] = "uploads"
 if not os.path.exists(application.config["UPLOAD_FOLDER"]):
     os.makedirs(application.config["UPLOAD_FOLDER"])
 
-#read aws credentials from elastic beanstalk envrionments
+# Read AWS credentials from Elastic Beanstalk environments
 aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
 aws_region = os.environ.get("AWS_REGION")
-#read endpoint name from envrionment 
+
+# Read endpoint name from environment
 endpoint_name = os.environ.get("SAGEMAKER_ENDPOINT_NAME")
-#endpoint_name = ""
 
 # Create a boto3 session with the provided credentials and region
 boto3_session = boto3.Session(
@@ -50,6 +50,11 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def resize_image(input_image_path, output_image_path, size):
+    original_image = Image.open(input_image_path)
+    resized_image = original_image.resize(size)
+    resized_image.save(output_image_path)
+
 @application.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(application.config["UPLOAD_FOLDER"], filename)
@@ -62,26 +67,29 @@ def index():
         if "image_url" in request.form:
             image_url = request.form["image_url"]
 
-        #convert the uploaded file for image captioning
+        # Convert the uploaded file for image captioning
         elif "image_file" in request.files:
             image_file = request.files["image_file"]
             if image_file and allowed_file(image_file.filename):
                 filename = secure_filename(image_file.filename)
                 image_file_path = os.path.join(application.config["UPLOAD_FOLDER"], filename)
                 image_file.save(image_file_path)
-                image_url = url_for("uploaded_file", filename=filename) 
-                caption = get_image_caption(image_file_path=image_file_path)
+
+                # Resize the image
+                resized_image_file_path = os.path.join(application.config["UPLOAD_FOLDER"], "resized_" + filename)
+                resize_image(image_file_path, resized_image_file_path, (800, 800))  # Resize to 800x800 or whatever size you prefer
+                
+                image_url = url_for("uploaded_file", filename="resized_" + filename)
+                caption = get_image_caption(image_file_path=resized_image_file_path)  # Send the resized image to SageMaker
                 return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
 
-        #url case
+        # URL case
         if image_url:
             caption = get_image_caption(image_url=image_url)
             return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
 
     caption = get_image_caption(default_image_url)
     return render_template("index.html", caption=caption, image_url=default_image_url, current_year=datetime.datetime.now().year)
-
-
 
 def get_image_caption(image_url=None, image_file_path=None):
     if image_url is not None:
@@ -107,4 +115,5 @@ def get_image_caption(image_url=None, image_file_path=None):
 
 if __name__ == "__main__":
     application.run()
-#host='0.0.0.0', port=80
+# host='0.0.0.0', port=80
+
