@@ -1,5 +1,5 @@
-# Image Captioning Sagemaker App
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# Image Captioning Sagemaker App 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![CD Pipeline](https://github.com/Yurui-Feng/Image-Captioning-Sagemaker/actions/workflows/deploy.yml/badge.svg)](https://github.com/Yurui-Feng/Image-Captioning-Sagemaker/actions/workflows/deploy.yml)
 
 This application deploys a Huggingface Image-to-text pretrained model on AWS SageMaker and provides a Flask-based web interface to caption images. The web application is capable of handling both URL and uploaded images.
 
@@ -15,7 +15,15 @@ This application deploys a Huggingface Image-to-text pretrained model on AWS Sag
 2. Prepare the model for deployment:
     - Create a folder called `code` in the project directory.
     - Add `inference.py` and `requirements.txt` to the `code` folder.
-    - Create a `model.tar.gz` file with the layout specified in the Huggingface SageMaker inference documentation.
+    - Create a `model.tar.gz` file with the layout specified in the [Huggingface SageMaker inference documentation](https://huggingface.co/docs/sagemaker/inference#user-defined-code-and-modules).
+```
+    model.tar.gz/
+    |- pytorch_model.bin
+    |- ....
+    |- code/
+      |- inference.py
+      |- requirements.txt 
+```
 
 3. Upload the model to S3 using AWS CLI: `aws s3 cp model.tar.gz s3://<your-bucket-name>`
 
