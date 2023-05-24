@@ -1,4 +1,4 @@
-name: Python application CI
+name: Flask CI
 
 on:
   push:
@@ -24,4 +24,5 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        python -m unittest discover ../tests
+        cd ..
+        python -m unittest discover tests
