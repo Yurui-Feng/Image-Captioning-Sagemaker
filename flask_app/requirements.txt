@@ -3,3 +3,4 @@ boto3
 requests
 Pillow
 sagemaker
+pytest
