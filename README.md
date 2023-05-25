@@ -69,7 +69,7 @@ my_flask_app/
 │   └── index.html
 └── .ebextensions/
     └── 01_flask.config
-```
+``` 
 
 7. Deploy the application on Elastic Beanstalk:
     - Go to the AWS Management Console and select Elastic Beanstalk.
