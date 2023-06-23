@@ -57,12 +57,12 @@ This application deploys a Huggingface Image-to-text pretrained model on AWS Sag
             WSGIPath: "application:application"
         ```
 
-    - Zip all the application files at the root level of the archive.
+    - Zip all the application files at the root level of the `flask_app` folder.
 
 Please note that the file structure of your application should look like this:
 
 ```
-my_flask_app/
+flask_app/
 ├── application.py
 ├── requirements.txt
 ├── templates/
