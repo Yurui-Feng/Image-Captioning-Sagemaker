@@ -1,7 +1,7 @@
 # Image Captioning Sagemaker App 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![CD Pipeline](https://github.com/Yurui-Feng/Image-Captioning-Sagemaker/actions/workflows/deploy.yml/badge.svg)](https://github.com/Yurui-Feng/Image-Captioning-Sagemaker/actions/workflows/deploy.yml) [![Flask CI](https://github.com/Yurui-Feng/Image-Captioning-Sagemaker/actions/workflows/ci.yml/badge.svg)](https://github.com/Yurui-Feng/Image-Captioning-Sagemaker/actions/workflows/ci.yml)
 
-This application deploys a Huggingface Image-to-text pretrained model on AWS SageMaker and provides a Flask-based web interface to caption images. The web application is capable of handling both URL and uploaded images.
+This application deploys a Huggingface Image-to-text pretrained model on AWS SageMaker and provides a Flask-based web interface to caption images. The web application is capable of handling both URL and uploaded images. 
 
 ## Prerequisites
 - AWS Account with SageMaker and Elastic Beanstalk permissions
