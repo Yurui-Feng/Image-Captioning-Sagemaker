@@ -88,6 +88,7 @@ def uploaded_file(filename):
 @application.route("/", methods=["GET", "POST"])
 def index():
     default_image_url = "https://huggingface.co/datasets/Narsil/image_dummy/raw/main/parrots.png"
+    default_caption = "A pair of parrots standing next to each other"
     if request.method == "POST":
         image_url = None
         if "image_url" in request.form:
@@ -115,7 +116,7 @@ def index():
             return render_template("index.html", caption=caption, image_url=image_url, current_year=datetime.datetime.now().year)
 
     caption = get_image_caption(default_image_url)
-    return render_template("index.html", caption=caption, image_url=default_image_url, current_year=datetime.datetime.now().year)
+    return render_template("index.html", caption=default_caption, image_url=default_image_url, current_year=datetime.datetime.now().year)
 
 def get_image_caption(image_url=None, image_file_path=None):
     if image_url is not None:
