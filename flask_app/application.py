@@ -96,7 +96,7 @@ def index():
             image_url = request.form["image_url"]
 
         # Convert the uploaded file for image captioning
-        elif "image_file" in request.files:
+        if "image_file" in request.files:
             image_file = request.files["image_file"]
             if image_file and allowed_file(image_file.filename):
                 filename = secure_filename(image_file.filename)
